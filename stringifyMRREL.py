@@ -4,7 +4,8 @@
 import re
 import sys
 
-max_ngram = 100 # a reasonably high upper bound
+max_ngram = 100 # a reasonably high upper bound (e.g. if no max_ngram is given, no filtering should be done)
+bad_RELAS = {'mapped_to','sort_version_of','permuted_term_of','has_sort_version','has_permuted_term','see','entry_version_of','has_entry_version','see_from'} # don't ask
 
 for line in open('UMLSpaths.txt','r'):
     if '#' in line:
@@ -66,7 +67,7 @@ for pair in pairs:
     AUI1 = splitpair[1]
     AUI2 = splitpair[5]
     RELA = splitpair[7]
-    if len(RELA)>0:
+    if len(RELA)>0 and not RELA in bad_RELAS:
         try:
             AUI1_string = AUIs[AUI1][1]
             AUI2_string = AUIs[AUI2][1]
