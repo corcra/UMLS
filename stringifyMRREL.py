@@ -17,13 +17,8 @@ for line in open('UMLSpaths.txt','r'):
 outfile = open(outfile_path,'w')
 MRREL_file = open(MRREL_path,'r')
 MRCONSO_file = open(MRCONSO_path,'r')
-print outfile_path
-print MRREL_path
-print MRCONSO_path
 
-sys.exit()
 print 'Creating dictionary of AUIs from',MRREL_path
-
 # dictionary of AUIs... empty
 AUIs=dict()
 pairs=MRREL_file.readlines()
