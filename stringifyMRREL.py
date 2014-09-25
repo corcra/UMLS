@@ -5,9 +5,8 @@ import re
 import sys
 
 max_ngram = 100 # a reasonably high upper bound (e.g. if no max_ngram is given, no filtering should be done)
-bad_RELAS = {'mapped_to','sort_version_of','permuted_term_of','has_sort_version','has_permuted_term','see','entry_version_of','has_entry_version','see_from'} # don't ask
 
-for line in open('UMLSpaths.txt','r'):
+for line in open('UMLSoptions.txt','r'):
     if '#' in line:
         continue
     if 'outfile_path' in line:
@@ -18,6 +17,8 @@ for line in open('UMLSpaths.txt','r'):
         MRCONSO_path = line.split()[1]
     if 'max_ngram' in line:
         max_ngram = int(line.split()[1])
+    if 'bad_RELAS' in line:
+        bad_RELAS = set(line.split()[1].split(','))
 
 outfile = open(outfile_path,'w')
 MRREL_file = open(MRREL_path,'r')
@@ -61,7 +62,7 @@ print 'Reassigning pairs with values and saving to',outfile_path
 # now go back over and reassign pairs with their values
 pruned = 0
 kept = 0
-print 'Note: pruning pairs which contain ngrams longer than',max_ngram
+print 'Note: pruning pairs which contain ngrams longer than',max_ngram,'or have RELA from the forbidden list:\n',bad_RELAS
 for pair in pairs:
     splitpair = pair.split('|')
     AUI1 = splitpair[1]
@@ -71,7 +72,7 @@ for pair in pairs:
         try:
             AUI1_string = AUIs[AUI1][1]
             AUI2_string = AUIs[AUI2][1]
-            if (AUI1_string.count('_')-1)<= max_ngram and (AUI2_string.count('_')-1) <= max_ngram:
+            if (AUI1_string.count('_')+1)<= max_ngram and (AUI2_string.count('_')+1) <= max_ngram:
                 outline = splitpair[0]+':'+re.sub(' ','_',AUI1_string)+'\t'+splitpair[4]+':'+re.sub(' ','_',AUI2_string)+'\t'+RELA+'\n'
                 outfile.write(outline)
                 kept +=1
@@ -79,6 +80,7 @@ for pair in pairs:
                 pruned +=1
         except IndexError:
             continue
+
 
 print pruned,'examples were pruned.'
 print kept,'examples were kept.'
