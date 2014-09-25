@@ -58,7 +58,8 @@ print ''
 
 print 'Reassigning pairs with values and saving to',outfile_path
 # now go back over and reassign pairs with their values
-n_excess_ngram = 0
+pruned = 0
+kept = 0
 print 'Note: pruning pairs which contain ngrams longer than',max_ngram
 for pair in pairs:
     splitpair = pair.split('|')
@@ -72,9 +73,11 @@ for pair in pairs:
             if (AUI1_string.count('_')-1)<= max_ngram and (AUI2_string.count('_')-1) <= max_ngram:
                 outline = splitpair[0]+':'+re.sub(' ','_',AUI1_string)+'\t'+splitpair[4]+':'+re.sub(' ','_',AUI2_string)+'\t'+RELA+'\n'
                 outfile.write(outline)
+                kept +=1
             else:
-                n_excess_ngram +=1
+                pruned +=1
         except IndexError:
             continue
 
-print n_excess_ngram,'examples were pruned.'
+print pruned,'examples were pruned.'
+print kept,'examples were kept.'
