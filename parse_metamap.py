@@ -35,8 +35,13 @@ proc_data_path = metamap_output_path + '.reform'
 metamap_output = open(metamap_output_path, 'r')
 proc_data = open(proc_data_path, 'w')
 
+# --- the first line is 'args', pop that --- #
+args_line = metamap_output.readline()
+# not sure what second line is but pop it too
+unknown_line = metamap_output.readline()
+
 # --- the relevant and important functions --- #
-def parse_phrase(line):
+def parse_phrase(line, neg_dict={}):
     """
     Takes a phrase from machine-readable format, parses its mappings, returns
     a string of mapped terms (into CUIs, when possible).
@@ -65,6 +70,14 @@ def parse_phrase(line):
             CUI = mapping.split(',')[1].strip('\'')
             words = re.split('[\[\]]',','.join(mapping.split(',')[4:]))[1].split(',')
             umls_strings = mapping.split(',')[2:4]
+            # CPI is the final [] in this mapping, I think/believe
+            ConceptPositionalInfo = mapping.split('[')[-1].split(']')[0]
+            if ConceptPositionalInfo in neg_dict:
+                # this concept has been negated!
+                # make sure it's the same one...
+                assert CUI in neg_dict[ConceptPositionalInfo]
+                # need to make sure it's ONE of the CUIs which was negated at this location
+                CUI = 'NOT_' + CUI
             if INTERACTIVE:
                 outstring += '\n\tAssociation between '+ CUI + ' and ' + ', '.join(map(lambda x: '"'+x+'"',words))
                 if len(words) > 1:
@@ -95,7 +108,7 @@ def parse_phrase(line):
     return parsed_phrase
 
 
-def parse_utterance():
+def parse_utterance(neg_dict={}):
     """
     Suck in an utterance from the machine-readable format, parse its mapping
     and then return a string of mapped terms (into CUIs).
@@ -105,7 +118,7 @@ def parse_utterance():
     line = metamap_output.readline()
     while not EOU_re.match(line):
         if phrase_re.match(line):
-            parsed_phrase = parse_phrase(line)
+            parsed_phrase = parse_phrase(line, neg_dict)
             phrases += parsed_phrase
         elif not EOU_re.match(line):
             print line
@@ -113,14 +126,40 @@ def parse_utterance():
         line = metamap_output.readline()
     return phrases
 
+def parse_negline(neg_line):
+    assert 'neg_list([' in neg_line
+    neg_dict = dict()
+    # strip things out
+    # (removing "neg_list(["... and ..."]).\n")
+    l_stripped = neg_line[10:][:-5]
+    # split into seprate 'negations'...
+    # split on ( and then remove the training ", negation(" at the end, first entry is useless
+    negations = map(lambda x: x.rstrip(')')[:-10] if 'negation' in x else x.rstrip(')'), l_stripped.split('('))[1:]
+    # for each negation, grab its location and CUI
+    for neg in negations:
+        # strip the string part of the CUI: we know it's between the SECOND pair of [], and before a :
+        NegatedConcept = neg.split('[')[2].split(':')[0].strip('\'')
+        # now get the concept... we know it's in the THIRD set of []... and there may be several separated by ,
+        ConceptPositionalInfo = neg.split('[')[3].rstrip(']')
+        try:
+            neg_dict[ConceptPositionalInfo].add(NegatedConcept)
+        except KeyError:
+            neg_dict[ConceptPositionalInfo] = set([NegatedConcept])
+    return neg_dict
+
 # --- run through the file --- #
+# --- get the neglist --- #
+neg_line = metamap_output.readline()
+neg_dict = parse_negline(neg_line)
+
+# the first line
 n = 0
 while True:
     line = metamap_output.readline()
     if not line: break
     if utterance_re.match(line):
         # we are now in an utterance!
-        parsed_utterance = parse_utterance()
+        parsed_utterance = parse_utterance(neg_dict)
         print 'Parsed utterance:'
         print '\t','"'.join(line.split('"')[1:2]).strip('[]')
         print '=====>'
