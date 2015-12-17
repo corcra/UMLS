@@ -7,7 +7,8 @@
 import re
 import sys
 
-INTERACTIVE = True
+#INTERACTIVE = True
+INTERACTIVE = False
 
 # --- some regexes --- #
 utterance_re = re.compile('^utterance\(')
@@ -127,6 +128,17 @@ def parse_utterance(neg_dict={}):
     return phrases
 
 def parse_negline(neg_line):
+    """
+    Parse the THIRD line of the .mmo file, where the negations are stored.
+    Why does it not do this per-phrase? Mystery.
+    We connect the negated-CUI to its appearance in the text using the 
+    ConceptPositionalInfo which _appears_ to correspond to the PosInfo field
+    which appears in the ev found in a mapping.
+    The output is neg_dict which maps these ConceptPositionalInfos into the
+    associated CUIs :we use this for sanity checking while parsing the mappings;
+    the position should be enough to identify it, but for extra-safety we assert
+    that the CUIs are matching.
+    """
     assert 'neg_list([' in neg_line
     neg_dict = dict()
     # strip things out
