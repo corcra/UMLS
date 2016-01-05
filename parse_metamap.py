@@ -55,8 +55,8 @@ def parse_phrase(line, neg_dict={}):
     """
     wordmap = dict()
     # list of words in the phrase
-    # (note: the phrase looks like phrase('PHRASEHERE', [det(... )
-    phrase = re.sub('[\'\.]','',re.sub('phrase\(','', line).split(',[det(')[0])
+    # (note: the phrase looks like phrase('PHRASEHERE', [sometext(... )
+    phrase = re.sub('[\'\.]','',re.split(',\[[a-zA-Z]+\(', re.sub('phrase\(','', line))[0])
     # get the candidates (and most importantly, their numbers)
     candidates = metamap_output.readline()
     assert candidates_re.match(candidates)
@@ -134,7 +134,7 @@ def parse_utterance(neg_dict={}):
             phrases += parsed_phrase
         elif not EOU_re.match(line):
             print line
-            sys.exit('ERROR: what', line)
+            sys.exit('ERROR: what')
         line = metamap_output.readline()
     return phrases
 
