@@ -49,7 +49,8 @@ def parse_phrase(line, neg_dict={}):
     """
     wordmap = dict()
     # list of words in the phrase
-    phrase = re.sub('[\'\.]','',re.sub('phrase\(','', line).split(',')[0])
+    # (note: the phrase looks like phrase('PHRASEHERE', [det(... )
+    phrase = re.sub('[\'\.]','',re.sub('phrase\(','', line).split(',[det(')[0])
     # get the candidates (and most importantly, their numbers)
     candidates = metamap_output.readline()
     assert candidates_re.match(candidates)
@@ -85,9 +86,13 @@ def parse_phrase(line, neg_dict={}):
                     outstring += ' (subsuming ' + ' '.join(map(lambda x: '"'+x+'"', words[1:])) + ')'
                 outstring += '\n\tbased on UMLS strings ' + ', '.join(umls_strings) +'\n'
             wordmap[words[0]] = CUI
+            # if multiple words mapped to this CUI, remember to delete the rest
+            # that is: when we consume the sentence later we will 'replace' the
+            # first word in this list with the CUI, then delete the rest
+            # brittleness: delwords may appear elsewhere in the sentence
             delwords += words[1:]
-        # we all do things we are not proud of
-        for word in phrase.split():
+        # split on spaces, commas
+        for word in re.split(', | ', phrase):
             try:
                 # lowercase word, cause it is represented in the prolog that way
                 parsed_phrase += wordmap[word.lower()] + ' '
