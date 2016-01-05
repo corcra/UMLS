@@ -24,13 +24,19 @@ raw_data_path = ''
 # this is the metamap output. YMMV
 #   created by the command:
 # metamap14 -q -Q 3 --word_sense_disambiguation raw_data_path metamap_output_path
-if len(sys.argv) == 2:
-    metamap_output_path = sys.argv[1]
-else:
-    metamap_output_path = ''
 
-# this is the processed data path, the output of this script
-proc_data_path = metamap_output_path + '.reform'
+# must provide an input path
+assert len(sys.argv) >= 2
+metamap_output_path = sys.argv[1]
+# optionally provide output path
+# (this is the processed data path, the output of this script)
+try:
+    proc_data_path = sys.argv[2]
+    # do not write over the input, please
+    assert not proc_data_path == metamap_output_path
+except IndexError:
+    # not provided
+    proc_data_path = metamap_output_path + '.reform'
 
 # --- open files --- #
 metamap_output = open(metamap_output_path, 'r')
