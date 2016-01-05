@@ -9,6 +9,10 @@ import sys
 
 #INTERACTIVE = True
 INTERACTIVE = False
+# "hacks" to fix metamap weirdness
+POSTPROC = True
+if POSTPROC:
+    print 'WARNING: Performing dataset-specific postprocessing.'
 
 # --- some regexes --- #
 utterance_re = re.compile('^utterance\(')
@@ -119,6 +123,15 @@ def parse_phrase(line, neg_dict={}):
             eh = raw_input('')
     return parsed_phrase
 
+def postproc_utterance(parsed_utterance):
+    """
+    HACKS!
+    Do some 'manual' post-processing to make up for MetaMap peculiarity.
+    WARNING: dataset specific.
+    """
+    # _ S__ DEID --> _S__DEID
+    parsed_utterance = re.sub('_ S__ DEID', '_S__DEID', parsed_utterance)
+    return parsed_utterance
 
 def parse_utterance(neg_dict={}):
     """
@@ -133,8 +146,9 @@ def parse_utterance(neg_dict={}):
             parsed_phrase = parse_phrase(line, neg_dict)
             phrases += parsed_phrase
         elif not EOU_re.match(line):
+            print'ERROR: utterance not followed by EOU line, followed by:'
             print line
-            sys.exit('ERROR: what')
+            sys.exit('ERROR: missing EOU')
         line = metamap_output.readline()
     return phrases
 
@@ -183,6 +197,9 @@ while True:
     if utterance_re.match(line):
         # we are now in an utterance!
         parsed_utterance = parse_utterance(neg_dict)
+        if POSTPROC:
+            # hacky post-processing
+            parsed_utterance = postproc_utterance(parsed_utterance)
         print 'Parsed utterance:'
         print '\t','"'.join(line.split('"')[1:2]).strip('[]')
         print '=====>'
