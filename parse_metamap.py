@@ -131,6 +131,8 @@ def postproc_utterance(parsed_utterance):
     """
     # _ S__ DEID --> _S__DEID
     parsed_utterance = re.sub('_ S__ DEID', '_S__DEID', parsed_utterance)
+    # _ S__ C2825141 --> _S__FINDING (FINDING...)
+    parsed_utterance = re.sub('_ S__ C2825141', '_S__FINDING', parsed_utterance)
     return parsed_utterance
 
 def parse_utterance(neg_dict={}):
@@ -145,6 +147,9 @@ def parse_utterance(neg_dict={}):
         if phrase_re.match(line):
             parsed_phrase = parse_phrase(line, neg_dict)
             phrases += parsed_phrase
+        elif line == '':
+            # EOF I guess...
+            return phrases
         elif not EOU_re.match(line):
             print'ERROR: utterance not followed by EOU line, followed by:'
             print line
