@@ -63,11 +63,15 @@ def parse_phrase(line, neg_dict={}):
     phrase = re.sub('[\'\.]','',re.split(',\[[a-zA-Z]+\(', re.sub('phrase\(','', line))[0])
     # get the candidates (and most importantly, their numbers)
     candidates = metamap_output.readline()
-    assert candidates_re.match(candidates)
+    if candidates == '' or not candidates_re.match(candidates):
+        parsed_phrase = phrase + ' '
+        return parsed_phrase
     TotalCandidateCount = int(re.sub('candidates\(','',candidates).split(',')[0])
     # get the mappings
     mappings = metamap_output.readline()
-    assert mappings_re.match(mappings)
+    if mappings == '' or not mappings_re.match(mappings):
+        parsed_phrase = phrase + ' '
+        return parsed_phrase
     if TotalCandidateCount == 0:
         # there were no mappings for this phrase
         parsed_phrase = phrase + ' '
@@ -80,7 +84,12 @@ def parse_phrase(line, neg_dict={}):
         outstring = ''
         for mapping in split_mappings[1:]:
             CUI = mapping.split(',')[1].strip('\'')
-            words = re.split('[\[\]]',','.join(mapping.split(',')[4:]))[1].split(',')
+            try:
+                words = re.split('[\[\]]',','.join(mapping.split(',')[4:]))[1].split(',')
+            except IndexError:
+                # ugh, mapping is messed up
+                print 'WARNING: input is messed up'
+                return parsed_phrase
             umls_strings = mapping.split(',')[2:4]
             # CPI is the final [] in this mapping, I think/believe
             ConceptPositionalInfo = mapping.split('[')[-1].split(']')[0]
